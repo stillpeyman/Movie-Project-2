@@ -1,0 +1,4 @@
+1. random
+2. matplotlib
+3. fuzzywuzzy
+4. python-Levenshtein
