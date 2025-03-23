@@ -24,8 +24,8 @@ Menu:
 5. Stats
 6. Random Movie
 7. Search Movie
-8. Movies Sorted by Rating
-9. Create Rating Histogram
+8. Movies Sorted by rating
+9. Create rating Histogram
 """
     blue_menu_text = f"{BLUE}{menu_text}{RESET}"
     print(blue_menu_text)
@@ -76,8 +76,8 @@ def list_movies(movies):
     and lists all the movies with their ratings.
     """
     print(f"{len(movies)} movies in total")
-    for movie, rating in movies.items():
-        print(f"{movie}: {rating}")
+    for movie in movies:
+        print(f"{movie["title"]} ({movie["year"]}): {movie["rating"]}")
 
 
 def add_movie(movies):
@@ -88,19 +88,34 @@ def add_movie(movies):
     while True:
         new_movie = input(f"{GREEN}Enter new movie name: {RESET}").title()
 
-        if new_movie in movies:
+        if any(movie["title"] == new_movie for movie in movies):
             print(f"{RED}Movie {new_movie} already exists! Try again.{RESET}")
             continue
 
-        rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
-        new_rating = float(rating_input.replace(",", "."))
+        while True:
+            try:
+                rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
+                rating = float(rating_input.replace(",", "."))
+                if not (0 <= rating <= 10):
+                    print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
+                    continue
+                break
 
-        if 0 <= new_rating <= 10:
-            movies[new_movie] = new_rating
-            print(f"Movie {new_movie} successfully added")
-            break
+            except ValueError:
+                print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
+                continue
 
-        print(f"{RED}Rating {new_rating} is invalid{RESET}")
+        while True:
+            try:
+                year = int(input(f"{GREEN}Enter year of release: {RESET}"))
+                break
+
+            except ValueError:
+                print(f"{RED}Invalid year! Please enter a valid number.{RESET}")
+
+        movies.append({"title": new_movie, "rating": rating, "year": year})
+        print(f"Movie {new_movie} successfully added")
+        break
 
 
 def delete_movie(movies):
@@ -108,14 +123,17 @@ def delete_movie(movies):
     This function prompts the user to enter a movie name to delete,
     checks if the title exists in the 'movies' dictionary and deletes it.
     """
-    movie_to_delete = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
+    while True:
+        movie_to_delete = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
+        movie_dict_to_delete = next((movie for movie in movies if movie["title"] == movie_to_delete), None)
 
-    if movie_to_delete in movies:
-        del movies[movie_to_delete]
-        print(f"Movie {movie_to_delete} successfully deleted")
+        if movie_dict_to_delete:
+            movies.remove(movie_dict_to_delete)
+            print(f"Movie {movie_to_delete} successfully deleted")
+            break
 
-    else:
-        print(f"{RED}Movie {movie_to_delete} doesn't exist!{RESET}")
+        else:
+            print(f"{RED}Movie {movie_to_delete} doesn't exist!{RESET}")
 
 
 def update_movie(movies):
@@ -124,16 +142,31 @@ def update_movie(movies):
     checks if the movie exists in the 'movies' dictionary,
     and allows the user to update its rating.
     """
-    movie_to_update = input(f"{GREEN}Enter movie name: {RESET}").title()
+    while True:
+        movie_to_update = input(f"{GREEN}Enter movie name: {RESET}").title()
+        movie_dict_to_update = next((movie for movie in movies if movie["title"] == movie_to_update), None)
 
-    if movie_to_update in movies:
-        rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
-        new_rating = float(rating_input.replace(",", "."))
-        movies[movie_to_update] = new_rating
-        print(f"Movie {movie_to_update} successfully updated")
+        if not movie_dict_to_update:
+            print(f"{RED}Movie {movie_to_update} doesn't exist!{RESET}")
+            continue
 
-    else:
-        print(f"{RED}Movie {movie_to_update} doesn't exist!{RESET}")
+        while True:
+            try:
+                rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
+                new_rating = float(rating_input.replace(",", "."))
+                if not (0 <= new_rating <= 10):
+                    print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
+                    continue
+
+                else:
+                    movie_dict_to_update["rating"] = new_rating
+                    print(f"Movie {movie_to_update} successfully updated")
+                    break
+
+            except ValueError:
+                print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
+
+        break
 
 
 def get_movie_stats(movies):
@@ -291,9 +324,9 @@ def create_rating_bar(movies):
 
     # removes x-axis labels (here: movie titles) because plt.bar() does that by default
     plt.xticks([])
-    plt.title("Movie Rating Chart")
+    plt.title("Movie rating Chart")
     plt.xlabel("Movies")
-    plt.ylabel("Rating")
+    plt.ylabel("rating")
     plt.show()
 
 
@@ -301,18 +334,19 @@ def main():
     """
     Initializes a movie database and displays the menu for user interaction.
     """
-    movies = {
-        "The Shawshank Redemption": 9.5,
-        "Pulp Fiction": 8.8,
-        "The Room": 3.6,
-        "The Godfather": 9.2,
-        "The Godfather: Part II": 9.0,
-        "The Dark Knight": 9.0,
-        "12 Angry Men": 8.9,
-        "Everything Everywhere All At Once": 8.9,
-        "Forrest Gump": 8.8,
-        "Star Wars: Episode V": 8.7
-    }
+    movies = [
+        {"title": "The Shawshank Redemption", "rating": 9.5, "year": 1994},
+        {"title": "Pulp Fiction", "rating": 8.8, "year": 1994},
+        {"title": "The Room", "rating": 3.6, "year": 2015},
+        {"title": "The Godfather", "rating": 9.2, "year": 1972},
+        {"title": "The Godfather: Part II", "rating": 9.0, "year": 1974},
+        {"title": "The Dark Knight", "rating": 9.0, "year": 2008},
+        {"title": "12 Angry Men", "rating": 8.9, "year": 1957},
+        {"title": "Everything Everywhere All At Once", "rating": 8.9, "year": 2022},
+        {"title": "Forrest Gump", "rating": 8.8, "year": 1994},
+        {"title": "Star Wars: Episode V", "rating": 8.7, "year": 1980}
+    ]
+
     print(f"{BLUE}{10 * "*"} My Movies Database {10 * "*"}{RESET}")
     user_menu_input(movies)
 
