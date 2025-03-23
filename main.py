@@ -16,6 +16,7 @@ def print_menu():
     """
     menu_text = """
 Menu: 
+0. Exit
 1. List Movies
 2. Add Movie
 3. Delete Movie
@@ -51,10 +52,14 @@ def user_menu_input(movies):
 
     while True:
         print_menu()
-        user_input = input(f"{GREEN}Enter choice (1-9): {RESET}").strip()
+        user_input = input(f"{GREEN}Enter choice (0-9): {RESET}").strip()
         # Ignore empty input
         if not user_input:
             continue
+
+        elif user_input == "0":
+            print("Bye!")
+            break
 
         elif user_input in user_choices:
             user_choices[user_input](movies)
