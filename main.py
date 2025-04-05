@@ -76,8 +76,8 @@ def list_movies(movies):
     and lists all the movies with their ratings.
     """
     print(f"{len(movies)} movies in total")
-    for movie in movies:
-        print(f"{movie["title"]} ({movie["year"]}): {movie["rating"]}")
+    for movie_title in movies:
+        print(f"{movies[movie_title]} ({movie_title["year"]}): {movie_title["rating"]}")
 
 
 def add_movie(movies):
@@ -86,17 +86,17 @@ def add_movie(movies):
     and its rating to the dictionary 'movies'.
     """
     while True:
-        new_movie = input(f"{GREEN}Enter new movie name: {RESET}").title()
+        new_title = input(f"{GREEN}Enter new movie name: {RESET}").title()
 
-        if any(movie["title"] == new_movie for movie in movies):
-            print(f"{RED}Movie {new_movie} already exists! Try again.{RESET}")
+        if any(movies[movie_title] == new_title for movie_title in movies):
+            print(f"{RED}Movie {new_title} already exists! Try again.{RESET}")
             continue
 
         while True:
             try:
                 rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
-                rating = float(rating_input.replace(",", "."))
-                if not (0 <= rating <= 10):
+                new_rating = float(rating_input.replace(",", "."))
+                if not (0 <= new_rating <= 10):
                     print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
                     continue
                 break
@@ -107,14 +107,18 @@ def add_movie(movies):
 
         while True:
             try:
-                year = int(input(f"{GREEN}Enter year of release: {RESET}"))
+                new_year = int(input(f"{GREEN}Enter year of release: {RESET}"))
                 break
 
             except ValueError:
                 print(f"{RED}Invalid year! Please enter a valid number.{RESET}")
 
-        movies.append({"title": new_movie, "rating": rating, "year": year})
-        print(f"Movie {new_movie} successfully added")
+        movies[new_title] = {
+            "rating": new_rating,
+            "year": new_year
+        }
+
+        print(f"Movie {new_title} successfully added")
         break
 
 
@@ -124,16 +128,16 @@ def delete_movie(movies):
     checks if the title exists in the 'movies' dictionary and deletes it.
     """
     while True:
-        movie_to_delete = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
-        movie_dict_to_delete = next((movie for movie in movies if movie["title"] == movie_to_delete), None)
+        user_input = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
+        movie_to_delete = next((movie_title for movie_title in movies if movies[movie_title] == user_input), None)
 
-        if movie_dict_to_delete:
-            movies.remove(movie_dict_to_delete)
+        if movie_to_delete:
+            del movies[movie_to_delete]
             print(f"Movie {movie_to_delete} successfully deleted")
             break
 
         else:
-            print(f"{RED}Movie {movie_to_delete} doesn't exist!{RESET}")
+            print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
 
 
 def update_movie(movies):
@@ -143,11 +147,11 @@ def update_movie(movies):
     and allows the user to update its rating.
     """
     while True:
-        movie_to_update = input(f"{GREEN}Enter movie name: {RESET}").title()
-        movie_dict_to_update = next((movie for movie in movies if movie["title"] == movie_to_update), None)
+        user_input = input(f"{GREEN}Enter movie name: {RESET}").title()
+        movie_to_update = next((movie_title for movie_title in movies if movies[movie_title] == user_input), None)
 
-        if not movie_dict_to_update:
-            print(f"{RED}Movie {movie_to_update} doesn't exist!{RESET}")
+        if not movie_to_update:
+            print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
             continue
 
         while True:
@@ -159,7 +163,7 @@ def update_movie(movies):
                     continue
 
                 else:
-                    movie_dict_to_update["rating"] = new_rating
+                    movie_to_update["rating"] = new_rating
                     print(f"Movie {movie_to_update} successfully updated")
                     break
 
@@ -175,62 +179,36 @@ def get_movie_stats(movies):
     prints the average and median rating as well as the
     best and the worst rated movie.
     """
-    sorted_values = sorted(movies.values())
+    sorted_ratings = sorted(movie["rating"] for movie in movies.values())
 
-    average_rating = sum(sorted_values) / len(sorted_values)
+    average_rating = sum(sorted_ratings) / len(sorted_ratings)
     print(f"Average rating: {round(average_rating, 2)}")
 
-    if len(sorted_values) % 2 == 0:
-        mid_index2 = len(sorted_values) // 2
-        mid_index1 = (len(sorted_values) // 2) - 1
-        median_rating_even_list = (sorted_values[mid_index2] + sorted_values[mid_index1]) / 2
-        print(f"Median rating: {median_rating_even_list}")
+    n = len(sorted_ratings)
+    mid_index = n // 2
 
+    if n % 2 == 0:
+        median_rating = (sorted_ratings[mid_index - 1] + sorted_ratings[mid_index]) / 2
     else:
-        mid_index = len(sorted_values) // 2
-        median_rating_odd_list = sorted_values[mid_index]
-        print(f"Median rating: {median_rating_odd_list}")
+        median_rating = sorted_ratings[mid_index]
 
-    best_movie = []
-    best_rating = -1
-    for movie, rating in movies.items():
-        if rating > best_rating:
-            best_rating = rating
-            best_movie = [movie]
-        elif rating == best_rating:
-            best_movie.append(movie)
+    print(f"Median rating: {median_rating}")
 
-    if len(best_movie) == 1:
-        print(f"Best movie: {best_movie[0]}, {best_rating}")
+    best_rating = max(movie_info["rating"] for movie_info in movies.values())
+    best_movies = [movie_title for movie_title, movie_info in movies.items() if movie_info["rating"] == best_rating]
 
+    if len(best_movies) == 1:
+        print(f"Best movie: {best_movies[0]}, {best_rating}")
     else:
-        best_movie_str = ""
-        for movie in best_movie:
-            best_movie_str += f"{movie}, {best_rating}; "
+        print(f"Best movies: {', '.join(best_movies)}, {best_rating}")
 
-        best_movie_str = best_movie_str.rstrip("; ")
-        print(f"Best movies: {best_movie_str}")
+    worst_rating = min(movie_info["rating"] for movie_info in movies.values())
+    worst_movies = [movie_title for movie_title, movie_info in movies.items() if movie_info["rating"] == worst_rating]
 
-    worst_movie = []
-    worst_rating = 10
-    for movie, rating in movies.items():
-        if rating < worst_rating:
-            worst_rating = rating
-            worst_movie = [movie]
-
-        elif rating == worst_rating:
-            worst_movie.append(movie)
-
-    if len(worst_movie) == 1:
-        print(f"Worst movie: {worst_movie[0]}, {worst_rating}")
-
+    if len(worst_movies) == 1:
+        print(f"Best movie: {worst_movies[0]}, {worst_rating}")
     else:
-        worst_movie_str = ""
-        for movie in worst_movie:
-            worst_movie_str += f"{movie}, {worst_rating}; "
-
-        worst_movie_str = worst_movie_str.rstrip("; ")
-        print(f"Worst movies: {worst_movie_str}")
+        print(f"Best movies: {', '.join(worst_movies)}, {worst_rating}")
 
 
 def get_random_movie(movies):
@@ -240,7 +218,7 @@ def get_random_movie(movies):
     """
     convert_database_to_tuple = list(movies.items())
     random_selection = random.choice(convert_database_to_tuple)
-    print(f"Your movie for tonight: {random_selection[0]}, it's rated {random_selection[1]}")
+    print(f"Your movie for tonight: {random_selection[0]}, it's rated {random_selection[1]["rating"]}.")
 
 
 def search_movie(movies):
@@ -282,19 +260,10 @@ def sort_movies_desc(movies):
     and movie rating, and then sorts the list of movies
     by movie rating in descending order.
     """
+    sorted_movie_list = sorted(movies.items(), key=lambda item: item[1]["rating"], reverse=True)
 
-    list_of_movie_tuples = tuple(movies.items())
-
-    # simple function to unpack a tuple containing movie title and rating
-    # to be used in sorted() as key in order to sort movies by ratings
-    def get_values(movie_tuple):
-        movie_title, rating = movie_tuple
-        return rating
-
-    sorted_movie_list_desc = sorted(list_of_movie_tuples, key=get_values, reverse=True)
-
-    for item in sorted_movie_list_desc:
-        print(f"{item[0]}: {item[1]}")
+    for movie in sorted_movie_list:
+        print(f"{movie[0]}: {movie[1]["rating"]}")
 
 
 def create_rating_bar(movies):
@@ -303,18 +272,19 @@ def create_rating_bar(movies):
     creates a bar chart based on the movie ratings
     using the matplotlib module.
     """
-    movies_keys = list(movies.keys())
-    movies_values = list(movies.values())
+    movie_titles = list(movies.keys())
+    movie_ratings = [movie_info["rating"] for movie_info in movies.values()]
 
     # BAR CHART: movies (keys) on x-axis, ratings (values) on y-axis
-    plt.bar(movies_keys, movies_values, color="blue", edgecolor="black")
+    plt.bar(movie_titles, movie_ratings, color="blue", edgecolor="black")
 
-    for key, value in movies.items():
-        # used for x-position of each movie based on its index in list database_keys
-        x_position = movies_keys.index(key)
+    for movie_title, movie_info in movies.items():
+        # used for x-position of each movie based on its index in list <movie_titles>
+        # gives correct position on x-axis for placing label under or over the bar
+        x_position = movie_titles.index(movie_title)
         plt.text(
             x_position,
-            y=0.5, s=key,
+            y=0.5, s=movie_title,
             ha="center",
             va="bottom",
             rotation=90,
@@ -334,18 +304,18 @@ def main():
     """
     Initializes a movie database and displays the menu for user interaction.
     """
-    movies = [
-        {"title": "The Shawshank Redemption", "rating": 9.5, "year": 1994},
-        {"title": "Pulp Fiction", "rating": 8.8, "year": 1994},
-        {"title": "The Room", "rating": 3.6, "year": 2015},
-        {"title": "The Godfather", "rating": 9.2, "year": 1972},
-        {"title": "The Godfather: Part II", "rating": 9.0, "year": 1974},
-        {"title": "The Dark Knight", "rating": 9.0, "year": 2008},
-        {"title": "12 Angry Men", "rating": 8.9, "year": 1957},
-        {"title": "Everything Everywhere All At Once", "rating": 8.9, "year": 2022},
-        {"title": "Forrest Gump", "rating": 8.8, "year": 1994},
-        {"title": "Star Wars: Episode V", "rating": 8.7, "year": 1980}
-    ]
+    movies = {
+        "The Shawshank Redemption": {"rating": 9.5, "year": 1994},
+        "Pulp Fiction": {"rating": 8.8, "year": 1994},
+        "The Room": {"rating": 3.6, "year": 2015},
+        "The Godfather": {"rating": 9.2, "year": 1972},
+        "The Godfather: Part II": {"rating": 9.0, "year": 1974},
+        "The Dark Knight": {"rating": 9.0, "year": 2008},
+        "12 Angry Men": {"rating": 8.9, "year": 1957},
+        "Everything Everywhere All At Once": {"rating": 8.9, "year": 2022},
+        "Forrest Gump": {"rating": 8.8, "year": 1994},
+        "Star Wars: Episode V": {"rating": 8.7, "year": 1980}
+    }
 
     print(f"{BLUE}{10 * "*"} My Movies Database {10 * "*"}{RESET}")
     user_menu_input(movies)
