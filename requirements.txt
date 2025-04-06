@@ -1,2 +1,2 @@
-matplotlib~=3.10.1
-fuzzywuzzy~=0.18.0
+matplotlib>=3.10.1
+fuzzywuzzy>=0.18.0

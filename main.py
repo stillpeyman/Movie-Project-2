@@ -1,8 +1,6 @@
 import random
 import matplotlib.pyplot as plt
-from fontTools.ttLib.woff2 import bboxFormat
 from fuzzywuzzy import process
-
 
 # ANSI escape codes for colors
 RED = "\033[31m"
@@ -58,11 +56,11 @@ def user_menu_input(movies):
         if not user_input:
             continue
 
-        elif user_input == "0":
+        if user_input == "0":
             print("Bye!")
             break
 
-        elif user_input in user_choices:
+        if user_input in user_choices:
             # basically calling the function with <movies> as arg
             user_choices[user_input](movies)
             input("\nPress enter to continue")
@@ -138,8 +136,7 @@ def delete_movie(movies):
             print(f"Movie {movie_to_delete} successfully deleted")
             break
 
-        else:
-            print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
+        print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
 
 
 def update_movie(movies):
@@ -164,10 +161,9 @@ def update_movie(movies):
                     print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
                     continue
 
-                else:
-                    movies[movie_to_update]["rating"] = new_rating
-                    print(f"Movie {movie_to_update} successfully updated")
-                    break
+                movies[movie_to_update]["rating"] = new_rating
+                print(f"Movie {movie_to_update} successfully updated")
+                break
 
             except ValueError:
                 print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
@@ -186,10 +182,10 @@ def get_movie_stats(movies):
     average_rating = sum(sorted_ratings) / len(sorted_ratings)
     print(f"Average rating: {round(average_rating, 2)}")
 
-    n = len(sorted_ratings)
-    mid_index = n // 2
+    ratings_count = len(sorted_ratings)
+    mid_index = ratings_count // 2
 
-    if n % 2 == 0:
+    if ratings_count % 2 == 0:
         median_rating = (sorted_ratings[mid_index - 1] + sorted_ratings[mid_index]) / 2
     else:
         median_rating = sorted_ratings[mid_index]
@@ -280,7 +276,8 @@ def create_rating_bar(movies):
     # BAR CHART: movies_titles on x-axis, movie_ratings on y-axis
     plt.bar(movie_titles, movie_ratings, color="blue", edgecolor="black")
 
-    for movie_title, movie_info in movies.items():
+    # <movie_info> replaced by <_> since not used in this loop
+    for movie_title, _ in movies.items():
         # used for x-position of each movie based on its index in list <movie_titles>
         # gives correct position on x-axis for placing label under or over the bar
         x_position = movie_titles.index(movie_title)
