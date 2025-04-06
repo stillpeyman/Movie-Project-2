@@ -164,34 +164,36 @@ import random
 #         print(f"Worst movies: {worst_movie_str}")
 
 
-def sort_movies_desc(movies):
-    """
-    This function converts the 'movies' dictionary
-    into list of tuples, each tuple holds movie title
-    and movie rating, and then sorts the list of movies
-    by movie rating in descending order.
-    """
-    sorted_movie_list = sorted(movies.items(), key=lambda item: item[1]["rating"], reverse=True)
-    for movie in sorted_movie_list:
-        print(f"{movie[0]}: {movie[1]["rating"]}")
+# def sort_movies_desc(movies):
+#     """
+#     This function converts the 'movies' dictionary
+#     into list of tuples, each tuple holds movie title
+#     and movie rating, and then sorts the list of movies
+#     by movie rating in descending order.
+#     """
+#     sorted_movie_list = sorted(movies.items(), key=lambda item: item[1]["rating"], reverse=True)
+#     for movie in sorted_movie_list:
+#         print(f"{movie[0]}: {movie[1]["rating"]}")
+#
+#
+# # new data structure: dict of dicts:
+# movies = {
+#     "The Shawshank Redemption": {"rating": 9.5, "year": 1994},
+#     "Pulp Fiction": {"rating": 8.8, "year": 1994},
+#     "The Room": {"rating": 3.6, "year": 2015},
+#     "The Godfather": {"rating": 9.2, "year": 1972},
+#     "The Godfather: Part II": {"rating": 9.0, "year": 1974},
+#     "The Dark Knight": {"rating": 9.0, "year": 2008},
+#     "12 Angry Men": {"rating": 8.9, "year": 1957},
+#     "Everything Everywhere All At Once": {"rating": 8.9, "year": 2022},
+#     "Forrest Gump": {"rating": 8.8, "year": 1994},
+#     "Star Wars: Episode V": {"rating": 8.7, "year": 1980}
+# }
+#
+# print(movies.items())
+# print()
+# print(movies.keys())
+# print()
+# print(movies.values())
 
-
-# new data structure: dict of dicts:
-movies = {
-    "The Shawshank Redemption": {"rating": 9.5, "year": 1994},
-    "Pulp Fiction": {"rating": 8.8, "year": 1994},
-    "The Room": {"rating": 3.6, "year": 2015},
-    "The Godfather": {"rating": 9.2, "year": 1972},
-    "The Godfather: Part II": {"rating": 9.0, "year": 1974},
-    "The Dark Knight": {"rating": 9.0, "year": 2008},
-    "12 Angry Men": {"rating": 8.9, "year": 1957},
-    "Everything Everywhere All At Once": {"rating": 8.9, "year": 2022},
-    "Forrest Gump": {"rating": 8.8, "year": 1994},
-    "Star Wars: Episode V": {"rating": 8.7, "year": 1980}
-}
-
-print(movies.keys())
-print(movies.values())
-
-sort_movies_desc(movies)
 

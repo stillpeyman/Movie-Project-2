@@ -1,5 +1,6 @@
 import random
 import matplotlib.pyplot as plt
+from fontTools.ttLib.woff2 import bboxFormat
 from fuzzywuzzy import process
 
 
@@ -62,6 +63,7 @@ def user_menu_input(movies):
             break
 
         elif user_input in user_choices:
+            # basically calling the function with <movies> as arg
             user_choices[user_input](movies)
             input("\nPress enter to continue")
 
@@ -75,9 +77,9 @@ def list_movies(movies):
     This function takes the dictionary 'movies'
     and lists all the movies with their ratings.
     """
-    print(f"{len(movies)} movies in total")
-    for movie_title in movies:
-        print(f"{movies[movie_title]} ({movie_title["year"]}): {movie_title["rating"]}")
+    print(f"{len(movies)} movies in total:")
+    for movie_title, movie_info in movies.items():
+        print(f"{movie_title} ({movie_info["year"]}): {movie_info["rating"]}")
 
 
 def add_movie(movies):
@@ -129,7 +131,7 @@ def delete_movie(movies):
     """
     while True:
         user_input = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
-        movie_to_delete = next((movie_title for movie_title in movies if movies[movie_title] == user_input), None)
+        movie_to_delete = next((movie_title for movie_title in movies if movie_title == user_input), None)
 
         if movie_to_delete:
             del movies[movie_to_delete]
@@ -148,7 +150,7 @@ def update_movie(movies):
     """
     while True:
         user_input = input(f"{GREEN}Enter movie name: {RESET}").title()
-        movie_to_update = next((movie_title for movie_title in movies if movies[movie_title] == user_input), None)
+        movie_to_update = next((movie_title for movie_title in movies if movie_title == user_input), None)
 
         if not movie_to_update:
             print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
@@ -163,7 +165,7 @@ def update_movie(movies):
                     continue
 
                 else:
-                    movie_to_update["rating"] = new_rating
+                    movies[movie_to_update]["rating"] = new_rating
                     print(f"Movie {movie_to_update} successfully updated")
                     break
 
@@ -179,7 +181,7 @@ def get_movie_stats(movies):
     prints the average and median rating as well as the
     best and the worst rated movie.
     """
-    sorted_ratings = sorted(movie["rating"] for movie in movies.values())
+    sorted_ratings = sorted(movie_info["rating"] for movie_info in movies.values())
 
     average_rating = sum(sorted_ratings) / len(sorted_ratings)
     print(f"Average rating: {round(average_rating, 2)}")
@@ -245,7 +247,7 @@ def search_movie(movies):
         # filtered_matches = list of tuples, each tuple
         # contains movie title and match score
         for movie, score in filtered_matches:
-            print(f"{movie}: {movies[movie]}")
+            print(f"{movie} ({movies[movie]["year"]}): {movies[movie]["rating"]}")
             # print statement with match score
             # print(f"{movie}: {database[movie]} (Match score: {score})")
 
@@ -275,7 +277,7 @@ def create_rating_bar(movies):
     movie_titles = list(movies.keys())
     movie_ratings = [movie_info["rating"] for movie_info in movies.values()]
 
-    # BAR CHART: movies (keys) on x-axis, ratings (values) on y-axis
+    # BAR CHART: movies_titles on x-axis, movie_ratings on y-axis
     plt.bar(movie_titles, movie_ratings, color="blue", edgecolor="black")
 
     for movie_title, movie_info in movies.items():
@@ -297,6 +299,9 @@ def create_rating_bar(movies):
     plt.title("Movie rating Chart")
     plt.xlabel("Movies")
     plt.ylabel("rating")
+
+    # save the bar chart as PDF, <bbox_inches> (optional) trims extra white space around the figure
+    plt.savefig("movie_ratings_chart.pdf", bbox_inches="tight")
     plt.show()
 
 
