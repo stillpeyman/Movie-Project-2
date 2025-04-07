@@ -1,6 +1,8 @@
 import random
 import matplotlib.pyplot as plt
 from fuzzywuzzy import process
+import movie_storage as ms
+
 
 # ANSI escape codes for colors
 RED = "\033[31m"
@@ -30,7 +32,7 @@ Menu:
     print(blue_menu_text)
 
 
-def user_menu_input(movies):
+def user_menu_input():
     """
     This function displays a menu and handles user input to perform actions
     on a movie collection. The function continuously prompts the user for a choice,
@@ -62,7 +64,7 @@ def user_menu_input(movies):
 
         if user_input in user_choices:
             # basically calling the function with <movies> as arg
-            user_choices[user_input](movies)
+            user_choices[user_input]()
             input("\nPress enter to continue")
 
         else:
@@ -70,33 +72,45 @@ def user_menu_input(movies):
             continue
 
 
-def list_movies(movies):
+def list_movies():
     """
     This function takes the dictionary 'movies'
     and lists all the movies with their ratings.
     """
+    movies = ms.get_movies()
+
     print(f"{len(movies)} movies in total:")
     for movie_title, movie_info in movies.items():
-        print(f"{movie_title} ({movie_info["year"]}): {movie_info["rating"]}")
+        print(f"{movie_title} ({movie_info['year']}): {movie_info['rating']}")
 
 
-def add_movie(movies):
+def add_movie():
     """
     This function prompts the user to add a new movie
     and its rating to the dictionary 'movies'.
     """
+    movies = ms.get_movies()
+
     while True:
         new_title = input(f"{GREEN}Enter new movie name: {RESET}").title()
+
+        # check if title is empty string
+        if not new_title.strip():
+            print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
+            continue
 
         if any(movies[movie_title] == new_title for movie_title in movies):
             print(f"{RED}Movie {new_title} already exists! Try again.{RESET}")
             continue
 
+        # default initialization
+        new_rating = None
         while True:
+            rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
+
             try:
-                rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
                 new_rating = float(rating_input.replace(",", "."))
-                if not (0 <= new_rating <= 10):
+                if not 0 <= new_rating <= 10:
                     print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
                     continue
                 break
@@ -113,55 +127,64 @@ def add_movie(movies):
             except ValueError:
                 print(f"{RED}Invalid year! Please enter a valid number.{RESET}")
 
-        movies[new_title] = {
-            "rating": new_rating,
-            "year": new_year
-        }
-
+        ms.add_movie(new_title, new_year, new_rating)
         print(f"Movie {new_title} successfully added")
         break
 
 
-def delete_movie(movies):
+def delete_movie():
     """
     This function prompts the user to enter a movie name to delete,
     checks if the title exists in the 'movies' dictionary and deletes it.
     """
+    movies = ms.get_movies()
+
     while True:
         user_input = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
-        movie_to_delete = next((movie_title for movie_title in movies if movie_title == user_input), None)
 
-        if movie_to_delete:
-            del movies[movie_to_delete]
-            print(f"Movie {movie_to_delete} successfully deleted")
+        # check if title is empty string
+        if not user_input.strip():
+            print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
+            continue
+
+        # check if movie exists
+        if user_input in movies:
+            ms.delete_movie(user_input)
+            print(f"Movie {user_input} successfully deleted")
             break
 
         print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
 
 
-def update_movie(movies):
+def update_movie():
     """
     This function prompts the user to enter a movie name,
     checks if the movie exists in the 'movies' dictionary,
     and allows the user to update its rating.
     """
-    while True:
-        user_input = input(f"{GREEN}Enter movie name: {RESET}").title()
-        movie_to_update = next((movie_title for movie_title in movies if movie_title == user_input), None)
+    movies = ms.get_movies()
 
-        if not movie_to_update:
-            print(f"{RED}Movie {user_input} doesn't exist!{RESET}")
+    while True:
+        movie_to_update = input(f"{GREEN}Enter movie name: {RESET}").title()
+
+        # check if title is empty string
+        if not movie_to_update.strip():
+            print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
+            continue
+
+        if movie_to_update not in movies:
+            print(f"{RED}Movie {movie_to_update} doesn't exist!{RESET}")
             continue
 
         while True:
             try:
                 rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
                 new_rating = float(rating_input.replace(",", "."))
-                if not (0 <= new_rating <= 10):
+                if not 0 <= new_rating <= 10:
                     print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
                     continue
 
-                movies[movie_to_update]["rating"] = new_rating
+                ms.update_movie(movie_to_update, new_rating)
                 print(f"Movie {movie_to_update} successfully updated")
                 break
 
@@ -171,12 +194,14 @@ def update_movie(movies):
         break
 
 
-def get_movie_stats(movies):
+def get_movie_stats():
     """
     This function takes the 'movies' dictionary and
     prints the average and median rating as well as the
     best and the worst rated movie.
     """
+    movies = ms.get_movies()
+
     sorted_ratings = sorted(movie_info["rating"] for movie_info in movies.values())
 
     average_rating = sum(sorted_ratings) / len(sorted_ratings)
@@ -209,67 +234,73 @@ def get_movie_stats(movies):
         print(f"Best movies: {', '.join(worst_movies)}, {worst_rating}")
 
 
-def get_random_movie(movies):
+def get_random_movie():
     """
     This function uses the random module to get a random movie
     from the 'movies' dictionary as a suggestion to watch.
     """
+    movies = ms.get_movies()
+
     convert_database_to_tuple = list(movies.items())
     random_selection = random.choice(convert_database_to_tuple)
-    print(f"Your movie for tonight: {random_selection[0]}, it's rated {random_selection[1]["rating"]}.")
+    print(f"Your movie for tonight: {random_selection[0]}, it's rated {random_selection[1]['rating']}.")
 
 
-def search_movie(movies):
+def search_movie():
     """
     This function prompts the user to enter part of the movie
     name and searches for it in the 'movies' dictionary using
     fuzzymatch module for fuzzy string matching.
     """
-    search_input = input(f"{GREEN}Enter part of the movie name: {RESET}").casefold()
+    movies = ms.get_movies()
+
+    while True:
+        search_input = input(f"{GREEN}Enter part of the movie name: {RESET}").casefold()
+
+        # check for empty string
+        if not search_input.strip():
+            print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
+            continue
+
+        break
 
     # fuzzymatch module: using process.extract() to get best matches
     best_matches = process.extract(search_input, movies.keys(), limit=5)
 
     # manually filter matches based on score threshold
-    filtered_matches = []
-    for match in best_matches:
-        movie, score = match
-        if score >= 70:
-            filtered_matches.append(match)
+    filtered_matches = [(movie, score) for movie, score in best_matches if score >= 70]
 
-    # if filtered matches, print them or print "No matches found"
     if filtered_matches:
-        #print(filtered_matches)
-        # filtered_matches = list of tuples, each tuple
-        # contains movie title and match score
         for movie, score in filtered_matches:
-            print(f"{movie} ({movies[movie]["year"]}): {movies[movie]["rating"]}")
-            # print statement with match score
-            # print(f"{movie}: {database[movie]} (Match score: {score})")
+            print(f"{movie} ({movies[movie]['year']}): {movies[movie]['rating']}")
 
     else:
         print(f"{RED}No matches found{RESET}")
 
 
-def sort_movies_desc(movies):
+def sort_movies_desc():
     """
     This function converts the 'movies' dictionary
     into list of tuples, each tuple holds movie title
     and movie rating, and then sorts the list of movies
     by movie rating in descending order.
     """
+    movies = ms.get_movies()
+
     sorted_movie_list = sorted(movies.items(), key=lambda item: item[1]["rating"], reverse=True)
 
     for movie in sorted_movie_list:
-        print(f"{movie[0]}: {movie[1]["rating"]}")
+        print(f"{movie[0]}: {movie[1]['rating']}")
 
 
-def create_rating_bar(movies):
+def create_rating_bar():
     """
     This function takes the 'movies' dictionary and
     creates a bar chart based on the movie ratings
     using the matplotlib module.
     """
+    movies = ms.get_movies()
+
     movie_titles = list(movies.keys())
     movie_ratings = [movie_info["rating"] for movie_info in movies.values()]
 
@@ -304,23 +335,10 @@ def create_rating_bar(movies):
 
 def main():
     """
-    Initializes a movie database and displays the menu for user interaction.
+    Prints 'My Movies Database' and displays the menu for user interaction.
     """
-    movies = {
-        "The Shawshank Redemption": {"rating": 9.5, "year": 1994},
-        "Pulp Fiction": {"rating": 8.8, "year": 1994},
-        "The Room": {"rating": 3.6, "year": 2015},
-        "The Godfather": {"rating": 9.2, "year": 1972},
-        "The Godfather: Part II": {"rating": 9.0, "year": 1974},
-        "The Dark Knight": {"rating": 9.0, "year": 2008},
-        "12 Angry Men": {"rating": 8.9, "year": 1957},
-        "Everything Everywhere All At Once": {"rating": 8.9, "year": 2022},
-        "Forrest Gump": {"rating": 8.8, "year": 1994},
-        "Star Wars: Episode V": {"rating": 8.7, "year": 1980}
-    }
-
-    print(f"{BLUE}{10 * "*"} My Movies Database {10 * "*"}{RESET}")
-    user_menu_input(movies)
+    print(f"{BLUE}{10 * '*'} My Movies Database {10 * '*'}{RESET}")
+    user_menu_input()
 
 
 if __name__ == "__main__":
