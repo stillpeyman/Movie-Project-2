@@ -10,7 +10,7 @@ def get_movies():
     file and returns the data.
     """
     with open("movie_database.json", "r") as handle:
-        movies_data = json.loads(handle.read())
+        movies_data = json.load(handle)
 
     return movies_data
 
