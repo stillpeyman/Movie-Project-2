@@ -99,7 +99,7 @@ def add_movie():
             print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
             continue
 
-        if any(movies[movie_title] == new_title for movie_title in movies):
+        if new_title in movies:
             print(f"{RED}Movie {new_title} already exists! Try again.{RESET}")
             continue
 
