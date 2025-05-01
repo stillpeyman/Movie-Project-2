@@ -1,4 +1,5 @@
 import json
+import os
 
 
 def get_movies():
@@ -9,10 +10,13 @@ def get_movies():
     The function loads the information from the JSON
     file and returns the data.
     """
-    with open("movie_database.json", "r") as handle:
-        movies_data = json.load(handle)
+    try:
+        with open("movie_database.json", "r") as handle:
+            movies_data = json.load(handle)
+        return movies_data
 
-    return movies_data
+    except FileNotFoundError:
+        return None
 
 
 def save_movies(movies):
@@ -29,14 +33,21 @@ def add_movie(title, year, rating):
     Loads the information from the JSON file, add the movie,
     and saves it. The function doesn't need to validate the input.
     """
-    with open("movie_database.json", "r") as handle:
-        movies_data = json.load(handle)
+    # Check if file exists, if not, create an empty database
+    if not os.path.exists("movie_database.json"):
+        movies_data = {}
 
+    else:
+        with open("movie_database.json", "r") as handle:
+            movies_data = json.load(handle)
+
+    # Add new movie to movies_data dict
     movies_data[title] = {
         "rating": rating,
         "year": year
     }
 
+    # Save movie data to JSON file
     with open("movie_database.json", "w") as handle:
         json.dump(movies_data, handle, indent=4)
 
@@ -47,6 +58,11 @@ def delete_movie(title):
     Loads the information from the JSON file, deletes the movie,
     and saves it. The function doesn't need to validate the input.
     """
+    # Check if file exists, if not, no data to delete
+    if not os.path.exists("movie_database.json"):
+        print("No movie database found.")
+        return
+
     with open("movie_database.json", "r") as handle:
         movies_data = json.load(handle)
 
@@ -62,6 +78,11 @@ def update_movie(title, rating):
     Loads the information from the JSON file, updates the movie,
     and saves it. The function doesn't need to validate the input.
     """
+    # Check if file exists, if not, no data to update
+    if not os.path.exists("movie_database.json"):
+        print("No movie database found.")
+        return
+
     with open("movie_database.json", "r") as handle:
         movies_data = json.load(handle)
 

@@ -1,4 +1,6 @@
 import random
+from curses.ascii import isdigit
+
 import matplotlib.pyplot as plt
 from fuzzywuzzy import process
 import movie_storage as ms
@@ -17,16 +19,18 @@ def print_menu():
     """
     menu_text = """
 Menu: 
-0. Exit
-1. List Movies
-2. Add Movie
-3. Delete Movie
-4. Update Movie
-5. Stats
-6. Random Movie
-7. Search Movie
-8. Movies Sorted by rating
-9. Create rating Histogram
+0.  Exit
+1.  List Movies
+2.  Add Movie
+3.  Delete Movie
+4.  Update Movie
+5.  Stats
+6.  Random Movie
+7.  Search Movie
+8.  Movies Sorted by rating
+9.  Movies Sorted by year
+10. Movies filtered by rating and year
+11. Create rating Histogram
 """
     blue_menu_text = f"{BLUE}{menu_text}{RESET}"
     print(blue_menu_text)
@@ -47,13 +51,15 @@ def user_menu_input():
         "5": get_movie_stats,
         "6": get_random_movie,
         "7": search_movie,
-        "8": sort_movies_desc,
-        "9": create_rating_bar
+        "8": sort_movies_rating_desc,
+        "9": sort_movies_year_desc,
+        "10": filter_movies,
+        "11": create_rating_bar
     }
 
     while True:
         print_menu()
-        user_input = input(f"{GREEN}Enter choice (0-9): {RESET}").strip()
+        user_input = input(f"{GREEN}Enter choice (0-11): {RESET}").strip()
         # Ignore empty input
         if not user_input:
             continue
@@ -79,9 +85,13 @@ def list_movies():
     """
     movies = ms.get_movies()
 
-    print(f"{len(movies)} movies in total:")
-    for movie_title, movie_info in movies.items():
-        print(f"{movie_title} ({movie_info['year']}): {movie_info['rating']}")
+    if movies:
+        print(f"{len(movies)} movies in total:")
+        for movie_title, movie_info in movies.items():
+            print(f"{movie_title} ({movie_info['year']}): {movie_info['rating']}")
+
+    else:
+        print("No movies in database. Add movies ...")
 
 
 def add_movie():
@@ -92,21 +102,27 @@ def add_movie():
     movies = ms.get_movies()
 
     while True:
-        new_title = input(f"{GREEN}Enter new movie name: {RESET}").title()
+        new_title = input(f"{GREEN}Enter new movie name: {RESET}").title().strip()
 
         # check if title is empty string
         if not new_title.strip():
             print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
             continue
 
-        if new_title in movies:
-            print(f"{RED}Movie {new_title} already exists! Try again.{RESET}")
-            continue
+        if movies:
+            if new_title in movies:
+                print(f"{RED}Movie {new_title} already exists! Try again.{RESET}")
+                continue
 
         # default initialization
         new_rating = None
         while True:
-            rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
+            rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}").strip()
+
+            # check if rating is empty string
+            if not rating_input.strip():
+                print(f"{RED}Invalid input! Rating cannot be empty.{RESET}")
+                continue
 
             try:
                 new_rating = float(rating_input.replace(",", "."))
@@ -120,12 +136,19 @@ def add_movie():
                 continue
 
         while True:
-            try:
-                new_year = int(input(f"{GREEN}Enter year of release: {RESET}"))
+            new_year = input(f"{GREEN}Enter year of release: {RESET}").strip()
+
+            # check if year is empty string
+            if not new_year.strip():
+                print(f"{RED}Invalid input! Year cannot be empty.{RESET}")
+                continue
+
+            if new_year.isdigit():
+                new_year = int(new_year)
                 break
 
-            except ValueError:
-                print(f"{RED}Invalid year! Please enter a valid number.{RESET}")
+            else:
+                print(f"{RED}Invalid year! Please enter a valid year.{RESET}")
 
         ms.add_movie(new_title, new_year, new_rating)
         print(f"Movie {new_title} successfully added")
@@ -139,8 +162,12 @@ def delete_movie():
     """
     movies = ms.get_movies()
 
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
+
     while True:
-        user_input = input(f"{GREEN}Enter movie name to delete: {RESET}").title()
+        user_input = input(f"{GREEN}Enter movie name to delete: {RESET}").title().strip()
 
         # check if title is empty string
         if not user_input.strip():
@@ -164,6 +191,10 @@ def update_movie():
     """
     movies = ms.get_movies()
 
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
+
     while True:
         movie_to_update = input(f"{GREEN}Enter movie name: {RESET}").title()
 
@@ -177,8 +208,14 @@ def update_movie():
             continue
 
         while True:
+            rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
+
+            # check if rating is empty string
+            if not rating_input.strip():
+                print(f"{RED}Invalid input! Rating cannot be empty.{RESET}")
+                continue
+
             try:
-                rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
                 new_rating = float(rating_input.replace(",", "."))
                 if not 0 <= new_rating <= 10:
                     print(f"{RED}Invalid rating! Please enter a number between 0 and 10.{RESET}")
@@ -202,6 +239,10 @@ def get_movie_stats():
     """
     movies = ms.get_movies()
 
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
+
     sorted_ratings = sorted(movie_info["rating"] for movie_info in movies.values())
 
     average_rating = sum(sorted_ratings) / len(sorted_ratings)
@@ -221,17 +262,17 @@ def get_movie_stats():
     best_movies = [movie_title for movie_title, movie_info in movies.items() if movie_info["rating"] == best_rating]
 
     if len(best_movies) == 1:
-        print(f"Best movie: {best_movies[0]}, {best_rating}")
+        print(f"Highest rated movie: {best_movies[0]}, {best_rating}")
     else:
-        print(f"Best movies: {', '.join(best_movies)}, {best_rating}")
+        print(f"Highest rated movies: {', '.join(best_movies)}, {best_rating}")
 
     worst_rating = min(movie_info["rating"] for movie_info in movies.values())
     worst_movies = [movie_title for movie_title, movie_info in movies.items() if movie_info["rating"] == worst_rating]
 
     if len(worst_movies) == 1:
-        print(f"Best movie: {worst_movies[0]}, {worst_rating}")
+        print(f"Lowest rated movie: {worst_movies[0]}, {worst_rating}")
     else:
-        print(f"Best movies: {', '.join(worst_movies)}, {worst_rating}")
+        print(f"Lowest rated movies: {', '.join(worst_movies)}, {worst_rating}")
 
 
 def get_random_movie():
@@ -240,6 +281,10 @@ def get_random_movie():
     from the 'movies' dictionary as a suggestion to watch.
     """
     movies = ms.get_movies()
+
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
 
     convert_database_to_tuple = list(movies.items())
     random_selection = random.choice(convert_database_to_tuple)
@@ -253,6 +298,10 @@ def search_movie():
     fuzzymatch module for fuzzy string matching.
     """
     movies = ms.get_movies()
+
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
 
     while True:
         search_input = input(f"{GREEN}Enter part of the movie name: {RESET}").casefold()
@@ -278,7 +327,7 @@ def search_movie():
         print(f"{RED}No matches found{RESET}")
 
 
-def sort_movies_desc():
+def sort_movies_rating_desc():
     """
     This function converts the 'movies' dictionary
     into list of tuples, each tuple holds movie title
@@ -287,10 +336,118 @@ def sort_movies_desc():
     """
     movies = ms.get_movies()
 
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
+
     sorted_movie_list = sorted(movies.items(), key=lambda item: item[1]["rating"], reverse=True)
 
     for movie in sorted_movie_list:
         print(f"{movie[0]}: {movie[1]['rating']}")
+
+
+def sort_movies_year_desc():
+    """
+    This function converts the 'movies' dictionary
+    into list of tuples, each tuple holds movie title
+    and movie rating, and then sorts the list of movies
+    by year in descending order.
+    """
+    movies = ms.get_movies()
+
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
+
+    sorted_movie_list = sorted(movies.items(), key=lambda item: item[1]["year"], reverse=True)
+
+    for movie in sorted_movie_list:
+        print(f"{movie[0]}: {movie[1]['year']}")
+
+
+def filter_movies():
+    """
+    This function allows users to filter a list of movies
+    based on minimum rating, start year, and end year.
+    """
+    movies = ms.get_movies()
+
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
+
+    while True:
+        rating_input = input(f"{GREEN}Enter minimum rating (leave blank for no minimum rating): {RESET}").strip()
+
+        if rating_input == "":
+            minimum_rating = None
+            break
+
+        try:
+            minimum_rating = float(rating_input.replace(",", "."))
+            if not 0 <= minimum_rating <= 10:
+                print(f"{RED}Invalid minimum rating! Please enter a number between 0 and 10.{RESET}")
+                continue
+            break
+
+        except ValueError:
+            print(f"{RED}Invalid minimum rating! Please enter a number between 0 and 10.{RESET}")
+
+    while True:
+        start_input = input(f"{GREEN}Enter start year (leave blank for no start year): {RESET}").strip()
+
+        if start_input == "":
+            start_year = None
+            break
+
+        if start_input.isdigit():
+            start_year = int(start_input)
+            break
+
+        else:
+            print(f"{RED}Invalid start year! Please enter a valid year.{RESET}")
+
+    while True:
+        end_input = input(f"{GREEN}Enter end year (leave blank for no end year): {RESET}").strip()
+
+        if end_input == "":
+            end_year = None
+            break
+
+        if end_input.isdigit():
+            end_year = int(end_input)
+            break
+
+        else:
+            print(f"{RED}Invalid end year! Please enter a valid year.{RESET}")
+
+    filtered_movies = []
+    for movie, movie_info in movies.items():
+        year = movie_info.get("year")
+        rating = movie_info.get("rating")
+
+        if minimum_rating is not None and rating < minimum_rating:
+            continue
+
+        if start_year is not None and year < start_year:
+            continue
+
+        if end_year is not None and year < end_year:
+            continue
+
+        filtered_movies.append((movie, year, rating))
+
+    if filtered_movies:
+        # movies will sorted by rating first (asc), if 2 movies with same rating then sorted by year (asc)
+        sorted_movies = sorted(filtered_movies, key=lambda item: (item[2], item[1]))
+
+        # display results
+        print("\nFiltered Movies:")
+        for movie, year, rating in sorted_movies:
+            print(f"{movie} ({year}): {rating}")
+
+    else:
+        print("\nNo movies found with given filters.")
 
 
 def create_rating_bar():
@@ -300,6 +457,10 @@ def create_rating_bar():
     using the matplotlib module.
     """
     movies = ms.get_movies()
+
+    if movies is None:
+        print(f"{RED}No movies found in database.{RESET}")
+        return
 
     movie_titles = list(movies.keys())
     movie_ratings = [movie_info["rating"] for movie_info in movies.values()]
@@ -338,6 +499,7 @@ def main():
     Prints 'My Movies Database' and displays the menu for user interaction.
     """
     print(f"{BLUE}{10 * '*'} My Movies Database {10 * '*'}{RESET}")
+
     user_menu_input()
 
 
