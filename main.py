@@ -1,6 +1,5 @@
 import random
-from curses.ascii import isdigit
-
+import statistics
 import matplotlib.pyplot as plt
 from fuzzywuzzy import process
 import movie_storage as ms
@@ -54,7 +53,7 @@ def user_menu_input():
         "8": sort_movies_rating_desc,
         "9": sort_movies_year_desc,
         "10": filter_movies,
-        "11": create_rating_bar
+        "11": plot_rating_histogram
     }
 
     while True:
@@ -69,7 +68,7 @@ def user_menu_input():
             break
 
         if user_input in user_choices:
-            # basically calling the function with <movies> as arg
+            # Call corresponding function.
             user_choices[user_input]()
             input("\nPress enter to continue")
 
@@ -104,7 +103,7 @@ def add_movie():
     while True:
         new_title = input(f"{GREEN}Enter new movie name: {RESET}").title().strip()
 
-        # check if title is empty string
+        # Check if title is an empty string.
         if not new_title.strip():
             print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
             continue
@@ -114,12 +113,12 @@ def add_movie():
                 print(f"{RED}Movie {new_title} already exists! Try again.{RESET}")
                 continue
 
-        # default initialization
+        # Default initialization
         new_rating = None
         while True:
             rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}").strip()
 
-            # check if rating is empty string
+            # Check if rating is an empty string.
             if not rating_input.strip():
                 print(f"{RED}Invalid input! Rating cannot be empty.{RESET}")
                 continue
@@ -138,7 +137,7 @@ def add_movie():
         while True:
             new_year = input(f"{GREEN}Enter year of release: {RESET}").strip()
 
-            # check if year is empty string
+            # Check if year is an empty string
             if not new_year.strip():
                 print(f"{RED}Invalid input! Year cannot be empty.{RESET}")
                 continue
@@ -162,19 +161,18 @@ def delete_movie():
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
     while True:
         user_input = input(f"{GREEN}Enter movie name to delete: {RESET}").title().strip()
 
-        # check if title is empty string
         if not user_input.strip():
             print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
             continue
 
-        # check if movie exists
+        # Check if movie exists.
         if user_input in movies:
             ms.delete_movie(user_input)
             print(f"Movie {user_input} successfully deleted")
@@ -191,14 +189,13 @@ def update_movie():
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
     while True:
         movie_to_update = input(f"{GREEN}Enter movie name: {RESET}").title()
 
-        # check if title is empty string
         if not movie_to_update.strip():
             print(f"{RED}Invalid input! Title cannot be empty.{RESET}")
             continue
@@ -210,7 +207,6 @@ def update_movie():
         while True:
             rating_input = input(f"{GREEN}Enter new movie rating (0-10): {RESET}")
 
-            # check if rating is empty string
             if not rating_input.strip():
                 print(f"{RED}Invalid input! Rating cannot be empty.{RESET}")
                 continue
@@ -239,27 +235,36 @@ def get_movie_stats():
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
     sorted_ratings = sorted(movie_info["rating"] for movie_info in movies.values())
 
+    # Average rating
     average_rating = sum(sorted_ratings) / len(sorted_ratings)
     print(f"Average rating: {round(average_rating, 2)}")
 
-    ratings_count = len(sorted_ratings)
-    mid_index = ratings_count // 2
-
-    if ratings_count % 2 == 0:
-        median_rating = (sorted_ratings[mid_index - 1] + sorted_ratings[mid_index]) / 2
-    else:
-        median_rating = sorted_ratings[mid_index]
-
+    # Median rating using statistics.median
+    median_rating = statistics.median(sorted_ratings)
     print(f"Median rating: {median_rating}")
 
+    # ratings_count = len(sorted_ratings)
+    # mid_index = ratings_count // 2
+    #
+    # if ratings_count % 2 == 0:
+    #     median_rating = (sorted_ratings[mid_index - 1] + sorted_ratings[mid_index]) / 2
+    # else:
+    #     median_rating = sorted_ratings[mid_index]
+    #
+    # print(f"Median rating: {median_rating}")
+
     best_rating = max(movie_info["rating"] for movie_info in movies.values())
-    best_movies = [movie_title for movie_title, movie_info in movies.items() if movie_info["rating"] == best_rating]
+    best_movies = [
+        movie_title
+        for movie_title, movie_info in movies.items()
+        if movie_info["rating"] == best_rating
+    ]
 
     if len(best_movies) == 1:
         print(f"Highest rated movie: {best_movies[0]}, {best_rating}")
@@ -267,7 +272,11 @@ def get_movie_stats():
         print(f"Highest rated movies: {', '.join(best_movies)}, {best_rating}")
 
     worst_rating = min(movie_info["rating"] for movie_info in movies.values())
-    worst_movies = [movie_title for movie_title, movie_info in movies.items() if movie_info["rating"] == worst_rating]
+    worst_movies = [
+        movie_title
+        for movie_title, movie_info in movies.items()
+        if movie_info["rating"] == worst_rating
+    ]
 
     if len(worst_movies) == 1:
         print(f"Lowest rated movie: {worst_movies[0]}, {worst_rating}")
@@ -282,7 +291,7 @@ def get_random_movie():
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
@@ -299,7 +308,7 @@ def search_movie():
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
@@ -313,10 +322,10 @@ def search_movie():
 
         break
 
-    # fuzzymatch module: using process.extract() to get best matches
+    # Fuzzymatch module: use process.extract() to get best matches.
     best_matches = process.extract(search_input, movies.keys(), limit=5)
 
-    # manually filter matches based on score threshold
+    # Manually filter matches based on score threshold.
     filtered_matches = [(movie, score) for movie, score in best_matches if score >= 70]
 
     if filtered_matches:
@@ -350,12 +359,12 @@ def sort_movies_year_desc():
     """
     This function converts the 'movies' dictionary
     into list of tuples, each tuple holds movie title
-    and movie rating, and then sorts the list of movies
+    and movie year, and then sorts the list of movies
     by year in descending order.
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
@@ -372,7 +381,7 @@ def filter_movies():
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
@@ -432,16 +441,16 @@ def filter_movies():
         if start_year is not None and year < start_year:
             continue
 
-        if end_year is not None and year < end_year:
+        if end_year is not None and year > end_year:
             continue
 
         filtered_movies.append((movie, year, rating))
 
     if filtered_movies:
-        # movies will sorted by rating first (asc), if 2 movies with same rating then sorted by year (asc)
+        # Sort by rating (asc), then by year (asc) if ratings are equal.
         sorted_movies = sorted(filtered_movies, key=lambda item: (item[2], item[1]))
 
-        # display results
+        # Display results.
         print("\nFiltered Movies:")
         for movie, year, rating in sorted_movies:
             print(f"{movie} ({year}): {rating}")
@@ -450,48 +459,83 @@ def filter_movies():
         print("\nNo movies found with given filters.")
 
 
-def create_rating_bar():
+def plot_rating_histogram():
     """
-    This function takes the 'movies' dictionary and
-    creates a bar chart based on the movie ratings
-    using the matplotlib module.
+    Create a histogram of movie ratings.
     """
     movies = ms.get_movies()
 
-    if movies is None:
+    if not movies:
         print(f"{RED}No movies found in database.{RESET}")
         return
 
-    movie_titles = list(movies.keys())
     movie_ratings = [movie_info["rating"] for movie_info in movies.values()]
 
-    # BAR CHART: movies_titles on x-axis, movie_ratings on y-axis
-    plt.bar(movie_titles, movie_ratings, color="blue", edgecolor="black")
+    if not movie_ratings:
+        print(f"{RED}No ratings to plot.{RESET}")
+        return
 
-    # <movie_info> replaced by <_> since not used in this loop
-    for movie_title, _ in movies.items():
-        # used for x-position of each movie based on its index in list <movie_titles>
-        # gives correct position on x-axis for placing label under or over the bar
-        x_position = movie_titles.index(movie_title)
-        plt.text(
-            x_position,
-            y=0.5, s=movie_title,
-            ha="center",
-            va="bottom",
-            rotation=90,
-            fontsize=9,
-            c="white",
-            weight="bold")
+    # Create a new figure with a specific size (width=8, height=5 inches)
+    plt.figure(figsize=(8, 5))
 
-    # removes x-axis labels (here: movie titles) because plt.bar() does that by default
-    plt.xticks([])
-    plt.title("Movie rating Chart")
-    plt.xlabel("Movies")
-    plt.ylabel("rating")
+    # Create histogram with 10 bins, blue color, and black edges
+    plt.hist(movie_ratings, bins=10, color='skyblue', edgecolor='black')
+    plt.title("Distribution of Movie Ratings")
+    plt.xlabel("Rating")
+    plt.ylabel("Number of Movies")
 
-    # save the bar chart as PDF, <bbox_inches> (optional) trims extra white space around the figure
-    plt.savefig("movie_ratings_chart.pdf", bbox_inches="tight")
+    # Add horizontal grid lines for better readability
+    plt.grid(axis='y', alpha=0.75)
+    # Automatically adjust the layout so nothing is cut off
+    plt.tight_layout()
+
+    # Save the plot as PDF, <bbox_inches> (optional) trims extra white space around the figure
+    plt.savefig("movie_ratings_hist.pdf", bbox_inches="tight")
     plt.show()
+
+
+# def create_rating_bar():
+#     """
+#     This function takes the 'movies' dictionary and
+#     creates a bar chart based on the movie ratings
+#     using the matplotlib module.
+#     """
+#     movies = ms.get_movies()
+#
+#     if not movies:
+#         print(f"{RED}No movies found in database.{RESET}")
+#         return
+#
+#     movie_titles = list(movies.keys())
+#     movie_ratings = [movie_info["rating"] for movie_info in movies.values()]
+#
+#     # BAR CHART: movies_titles on x-axis, movie_ratings on y-axis
+#     plt.bar(movie_titles, movie_ratings, color="blue", edgecolor="black")
+#
+#     # <movie_info> replaced by <_> since not used in this loop
+#     for movie_title, _ in movies.items():
+#         # used for x-position of each movie based on its index in list <movie_titles>
+#         # gives correct position on x-axis for placing label under or over the bar
+#         x_position = movie_titles.index(movie_title)
+#         plt.text(
+#             x_position,
+#             y=0.5, s=movie_title,
+#             ha="center",
+#             va="bottom",
+#             rotation=90,
+#             fontsize=9,
+#             c="white",
+#             weight="bold")
+#
+#     # removes x-axis labels (here: movie titles) because plt.bar() does that by default
+#     plt.xticks([])
+#     plt.title("Movie rating Chart")
+#     plt.xlabel("Movies")
+#     plt.ylabel("rating")
+#
+#     # save the bar chart as PDF, <bbox_inches> (optional) trims extra white space around the figure
+#     plt.savefig("movie_ratings_chart.pdf", bbox_inches="tight")
+#     plt.show()
 
 
 def main():

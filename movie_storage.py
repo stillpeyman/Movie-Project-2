@@ -1,5 +1,7 @@
 import json
-import os
+
+
+MOVIE_DB_FILE = "movie_database.json"
 
 
 def get_movies():
@@ -8,22 +10,23 @@ def get_movies():
     contains the movies information in the database.
 
     The function loads the information from the JSON
-    file and returns the data.
+    file and returns the data. If the file is not found
+    return an empty dictionary.
     """
     try:
-        with open("movie_database.json", "r") as handle:
+        with open(MOVIE_DB_FILE, "r") as handle:
             movies_data = json.load(handle)
         return movies_data
 
     except FileNotFoundError:
-        return None
+        return {}
 
 
 def save_movies(movies):
     """
     Gets all your movies as an argument and saves them to the JSON file.
     """
-    with open("movie_database.json", "w") as handle:
+    with open(MOVIE_DB_FILE, "w") as handle:
         json.dump(movies, handle, indent=4)
 
 
@@ -33,13 +36,7 @@ def add_movie(title, year, rating):
     Loads the information from the JSON file, add the movie,
     and saves it. The function doesn't need to validate the input.
     """
-    # Check if file exists, if not, create an empty database
-    if not os.path.exists("movie_database.json"):
-        movies_data = {}
-
-    else:
-        with open("movie_database.json", "r") as handle:
-            movies_data = json.load(handle)
+    movies_data = get_movies()
 
     # Add new movie to movies_data dict
     movies_data[title] = {
@@ -48,8 +45,7 @@ def add_movie(title, year, rating):
     }
 
     # Save movie data to JSON file
-    with open("movie_database.json", "w") as handle:
-        json.dump(movies_data, handle, indent=4)
+    save_movies(movies_data)
 
 
 def delete_movie(title):
@@ -58,18 +54,12 @@ def delete_movie(title):
     Loads the information from the JSON file, deletes the movie,
     and saves it. The function doesn't need to validate the input.
     """
-    # Check if file exists, if not, no data to delete
-    if not os.path.exists("movie_database.json"):
-        print("No movie database found.")
+    movies_data = get_movies()
+    if title not in movies_data:
         return
 
-    with open("movie_database.json", "r") as handle:
-        movies_data = json.load(handle)
-
     del movies_data[title]
-
-    with open("movie_database.json", "w") as handle:
-        json.dump(movies_data, handle, indent=4)
+    save_movies(movies_data)
 
 
 def update_movie(title, rating):
@@ -78,16 +68,10 @@ def update_movie(title, rating):
     Loads the information from the JSON file, updates the movie,
     and saves it. The function doesn't need to validate the input.
     """
-    # Check if file exists, if not, no data to update
-    if not os.path.exists("movie_database.json"):
-        print("No movie database found.")
+    movies_data = get_movies()
+    if title not in movies_data:
         return
 
-    with open("movie_database.json", "r") as handle:
-        movies_data = json.load(handle)
-
     movies_data[title]["rating"] = rating
-
-    with open("movie_database.json", "w") as handle:
-        json.dump(movies_data, handle, indent=4)
+    save_movies(movies_data)
 
